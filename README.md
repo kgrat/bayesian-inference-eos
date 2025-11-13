@@ -26,7 +26,7 @@ The final "credible band" shows the family of EoS models that are statistically 
 
 The corner plot shows the final probability distributions for the three EoS parameters (the log-pressure at 1.85, 3.7, and 7.4 times nuclear saturation density). This shows the specific values and correlations that a physical EoS must have to be consistent with observations.
 
-![Corner Plot](corner_plot.png)
+![Corner Plot](mcmc_corner_plot.png)
 
 ### 3. MCMC Convergence
 
