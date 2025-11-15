@@ -210,18 +210,18 @@ def generate_observables(params):
 
     R_1_4 = np.interp(1.4, unique_masses, radii_sorted[unique_idx])
 
-    # --- This is the part that calculates R_2_08 ---
+    # This is the part that calculates R_2_08 
     if 2.08 > unique_masses[-1]:
          R_2_08 = 0 # Cannot calculate R_2.08 if M_max is too low
     else:
          R_2_08 = np.interp(2.08, unique_masses, radii_sorted[unique_idx])
-    # --- End ---
+    
 
     if np.isnan(R_1_4) or np.isnan(R_2_08):
         return M_max, 0, 0
 
     return M_max, R_1_4, R_2_08
-# --- 6. Testing ---
+# 6. Testing 
 test_params = [33.79, 34.43, 35.56]
 
 print(f"Testing with parameters: {test_params}")
@@ -234,9 +234,9 @@ print(f"Radius at 2.08 M_sun (km): {R_2_08:.2f}") # Prints 3 values
 # --- 7. Load ALL Real Observational Data ---
 
 
-    # --- 1. Load LIGO/Virgo GW170817 Data ---
+    # 1. Load LIGO/Virgo GW170817 Data
     # Columns: 0=m1, 1=m2, 4=Radius1, 5=Radius2
-gw_data = np.loadtxt('/Users/kushagratrivedi/python/tov_project/EoS-insensitive_posterior_samples.dat', skiprows=1) #skip 1 header line
+gw_data = np.loadtxt('EoS-insensitive_posterior_samples.dat', skiprows=1) #skip 1 header line
 m1_gw = gw_data[:, 0]
 m2_gw = gw_data[:, 1]
 r1_gw = gw_data[:, 4]
@@ -255,10 +255,10 @@ print(f"R_1.4 (LIGO): {R_LIGO_MEAN:.2f} +/- {R_LIGO_STD:.2f} km")
 
 
 
-# --- 2. Load NICER J0030+0451 Data ---
+# 2. Load NICER J0030+0451 Data
 # Load J0030_data.dat
 # Columns: 0=Radius, 1=Mass
-j0030_data = np.loadtxt('/Users/kushagratrivedi/python/tov_project/J0030_data.dat', skiprows=2) #skip 2 header lines
+j0030_data = np.loadtxt('J0030_data.dat', skiprows=2) #skip 2 header lines
 j0030_radii = j0030_data[:, 0]  # Column 0 is Radius
 j0030_masses = j0030_data[:, 1] # Column 1 is Mass
 
@@ -275,10 +275,10 @@ print(f"R_1.4 (J0030): {R_J0030_MEAN:.2f} +/- {R_J0030_STD:.2f} km")
 
 
 
-# --- 3. Load NICER J0740+0620 Data ---
+# 3. Load NICER J0740+0620 Data
 # Load J0740_data.dat
 # Columns: 0=Radius, 1=Mass
-j0740_data = np.loadtxt('/Users/kushagratrivedi/python/tov_project/J0740_data.dat', skiprows=2) # Skip 2 header lines
+j0740_data = np.loadtxt('J0740_data.dat', skiprows=2) # Skip 2 header lines
 
 
 j0740_radii = j0740_data[:, 0]  # Column 0 is Radius
@@ -296,7 +296,7 @@ print("--- Successfully loaded J0740+0620 data ---")
 print(f"R_2.08 (J0740): {R_J0740_MEAN:.2f} +/- {R_J0740_STD:.2f} km")
 
 
-# --- 8. Likelihood Function ---
+# 8. Likelihood Function
 
 def log_likelihood(params):
     """
@@ -308,7 +308,7 @@ def log_likelihood(params):
     except Exception as e:
         return -np.inf
 
-    # --- 2. The Judge's First Cut for errors---
+    # 2. The Judge's First Cut for errors
     if M_max < 2.01:
         return -np.inf
     if R_1_4 == 0: # The 1.4 M_sun star MUST exist
@@ -320,7 +320,7 @@ def log_likelihood(params):
     if not (34.0 < logP2 < 35.5): return -np.inf
     if not (35.0 < logP3 < 36.5): return -np.inf
 
-    # --- 3. The Scoring (The "Likelihood") ---
+    # 3. The Scoring (The "Likelihood")
     
     # Evidence A: NICER Radius (PSR J0030+0451)
     chi2_nicer_j0030 = ((R_1_4 - R_J0030_MEAN)**2) / (R_J0030_STD**2)
@@ -340,7 +340,7 @@ def log_likelihood(params):
 
     return final_score
 
-# --- Test the Likelihood Function ---
+# Test the Likelihood Function
 print("Testing the fully rigorous log_likelihood function...")
 good_params = [33.79, 34.43, 35.56] 
 

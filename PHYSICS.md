@@ -167,6 +167,7 @@ Future Work:
 - **Hybrid EoS models:** Include quark matter transitions/phase transitions.  
 - **2D likelihoods:** Use full M–R posterior contours from NICER and LIGO (Kernel Density Estimation).
 - **Direct Λ (tidal deformability):** Incorporate LIGO’s Λ posteriors directly.
+- **Nested sampling** Use it to better calculate the bayesian evidence.
 
 ---
 
