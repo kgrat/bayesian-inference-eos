@@ -5,7 +5,7 @@ This project constrains the neutron star (NS) Equation of State (EoS) by perform
 The "judge" or likelihood function is rigorously constrained by three key multi-messenger astronomical observations:
 1.  **LIGO/Virgo:** The gravitational wave event GW170817 (using the EoS-insensitive radius posteriors).
 2.  **NICER (PSR J0030+0451):** The mass-radius posteriors for the 1.44 M solar mass pulsar.
-3.  **NICER (PSR J0740+0620):** The mass-radius posteriors for the high-mass ~2.08 M solar mass pulsar. 
+3.  **NICER (PSR J0740+6620):** The mass-radius posteriors for the high-mass ~2.08 M solar mass pulsar. 
 
 For the full theoretical background and derivations, see [PHYSICS.md](./PHYSICS.md).
 
