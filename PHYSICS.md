@@ -78,27 +78,40 @@ The EoS is converted into observable stellar properties (mass and radius) by int
 ### TOV System
 
 1. **Mass Continuity**  
-   `dM/dr = 4πr²ρ(r)`
+   `dM/dr = 4πr² ε(r)/c²`
 
 2. **Hydrostatic Equilibrium (TOV Equation)**  
-   `dP/dr = - [ G (ρ + P/c²) (M + 4πr³P/c²) ] / [ r² (1 - 2GM/(rc²)) ]`
+   `dP/dr = - [ G (ε/c² + P/c²) (M + 4πr³P/c²) ] / [ r² (1 - 2GM/(rc²)) ]`
 
 Here:
-- *M(r)* is the mass enclosed within radius *r*,
-- *ρ(r)* and *P(r)* are local density and pressure,
+- *M(r)* is the mass-energy enclosed within radius *r*,
+- *ε(r)* is the **total energy density** (rest mass plus internal energy) and *P(r)* the pressure,
 - *G* and *c* are the gravitational constant and speed of light.
 
----
+Gravity couples to all of the energy, so it is ε, not the rest-mass density ρ, that appears in both equations. Earlier versions of this code used ρ in place of ε/c²; see the Changelog in the README.
+
+### Energy Density of a Piecewise Polytrope
+
+For cold matter the first law of thermodynamics reads `d(ε/ρ) = -P d(1/ρ)`. For a segment `P = Kᵢ ρ^Γᵢ` on `ρᵢ₋₁ ≤ ρ < ρᵢ` this integrates to (Read et al. 2009, Eqs. 6–7)
+
+`ε(ρ) = (1 + aᵢ) ρc² + Kᵢ ρ^Γᵢ / (Γᵢ − 1)`
+
+`aᵢ = ε(ρᵢ₋₁)/(ρᵢ₋₁c²) − 1 − Kᵢ ρᵢ₋₁^(Γᵢ−1) / ((Γᵢ − 1)c²)`
+
+The constants aᵢ make ε continuous at each dividing density, and a₀ = 0 for the crust, so ε → ρc² as ρ → 0. The second term, P/(Γᵢ − 1), is the internal (compression) energy. The segments are the crust, the three core segments between the knots, and a Γ = 4 extension above ρ₃. Inside the ODE, ε(P) is obtained as P → ρ (inverse EoS) → ε(ρ).
 
 ### Numerical Integration
 
 To generate an **M–R curve** for a given EoS:
 
-- Start at the center with a chosen **central density (ρ_c)** and integrate outward until **P(r) ≈ 0**.
-- The radius at which pressure vanishes defines the star’s **surface radius (R)**.
-- The corresponding mass M(R) gives the total **gravitational mass**.
+- Start at r₀ = 1 µm with the series solution
+  `M(r₀) = (4/3)π (ε_c/c²) r₀³` and
+  `P(r₀) = P_c − (2πG/3c⁴)(ε_c + P_c)(ε_c + 3P_c) r₀²`,
+  where ε_c = ε(ρ_c).
+- Integrate outward (`scipy` RK45) until **P(r) ≈ 0**; that radius is the star's **surface radius (R)**.
+- The corresponding M(R) is the total **gravitational mass**.
 
-Repeating this for multiple ρ_c values yields a full mass–radius relation.
+Repeating this for 50 central densities between ρ_nuc and 15 ρ_nuc yields the mass–radius relation.
 
 ---
 
@@ -120,7 +133,7 @@ Where:
 
 1. The EoS must support **Mₘₐₓ > 2.01 M⊙**.  
 2. Pressures must lie in a physically reasonable range (e.g., 33.0 < log P₁ < 36.5).  
-3. Causality and monotonicity constraints are enforced automatically via the TOV solver.
+3. Pressure must increase monotonically across the knots (enforced). Causality (c_s ≤ c) is **not** enforced.
 
 ---
 

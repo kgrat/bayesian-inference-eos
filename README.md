@@ -2,7 +2,7 @@
 
 This project constrains the neutron star (NS) Equation of State (EoS) by performing a Bayesian MCMC analysis on a 3-parameter piecewise polytropic EoS model.
 
-The "judge" or likelihood function is rigorously constrained by three key multi-messenger astronomical observations:
+The likelihood uses three multi-messenger astronomical observations, each reduced to a Gaussian on the radius at a fixed mass:
 1.  **LIGO/Virgo:** The gravitational wave event GW170817 (using the EoS-insensitive radius posteriors).
 2.  **NICER (PSR J0030+0451):** The mass-radius posteriors for the 1.44 M solar mass pulsar.
 3.  **NICER (PSR J0740+0620):** The mass-radius posteriors for the high-mass ~2.08 M solar mass pulsar. 
@@ -13,6 +13,8 @@ For the full theoretical background and derivations, see [PHYSICS.md](./PHYSICS.
 ---
 
 ## Results
+
+> **Note:** `mcmc_results.h5` and the plots below were produced before the energy-density correction (see [Changelog](#changelog)) and have not been regenerated. The pre-fix posterior overestimates the maximum mass. Re-run `run_mcmc.py` and `plot_results.py` to update them.
 
 The MCMC simulation, run with 50 walkers for 2,500 steps, successfully found the family of EoS models that are consistent with all three data sets.
 
@@ -40,7 +42,7 @@ The walker traces show that the MCMC successfully converged on a stable solution
 
 This project is structured into three main Python files that work together. The correct sequence to reproduce the results is:
 
-1.  `tov_model.py`: **This is the core physics engine.** It contains all the functions for building the EoS, solving the TOV equations, and the likelihood "judge." It is imported as a module by the other scripts.
+1.  `tov_model.py`: **This is the core physics engine.** It contains the functions for building the EoS, its energy density, and solving the TOV equations. It is imported as a module by the other scripts; running it directly performs a test and evaluates the likelihood on example parameters.
 
 2.  `run_mcmc.py`: **This is the main computation script.** It imports the engine from `tov_model.py` and runs the MCMC simulation using `emcee` and `multiprocessing`. This is the script that takes several hours.
 
@@ -86,6 +88,24 @@ python plot_results.py
 ```
 
 This script will load mcmc_results.h5, generate all three plots (Trace, Corner, and M-R Band), and save them as .png files in your folder.
+
+---
+
+## Changelog
+
+**Energy-density correction (fix-energy-density branch).**
+
+* **TOV equations.** The solver used the rest-mass density ρ where the TOV equations need the total energy density ε/c²: in dM/dr, in the (ε + P) factor of dP/dr, and in the central conditions. It now uses ε(P) = (1 + aᵢ)ρc² + Kᵢρ^Γᵢ/(Γᵢ − 1), with aᵢ set by continuity of ε at each dividing density (Read et al. 2009). See PHYSICS.md.
+* **Central series expansion.** The P(r₀) correction term divided by c² instead of c⁴. Its effect was about 0.1% of P_c.
+* **One copy of the physics.** `run_mcmc.py` and `plot_results.py` each carried their own copy of the EoS/TOV code. Both now import it from `tov_model.py`. The test code in `tov_model.py` runs only when the file is executed directly.
+* **Effect.** The MCMC has **not** been re-run yet, so `mcmc_results.h5` and the plots are still pre-fix. Evaluating 500 draws of the old posterior with old and corrected physics:
+
+  | | M_max [M☉] median [90%] | R_1.4 [km] median [90%] |
+  | :--- | :--- | :--- |
+  | Old posterior, old physics | 3.17 [2.49, 3.73] | 12.42 [11.77, 13.23] |
+  | Same draws, corrected physics | 2.74 [2.08, 3.29] | 11.99 [11.23, 12.68] |
+
+  For a fixed EoS the correction lowers M_max by about 0.44 M☉ and R_1.4 by about 0.42 km (medians). 2.8% of the old posterior draws no longer reach 2.01 M☉. Because R_1.4 enters the likelihood directly, a re-run will move the parameters toward stiffer pressures rather than keep these shifted radii. Old results and engines are in `results_before_epsfix/`; `compare_before_after_epsfix.py` produces the old/new comparison once a new `mcmc_results.h5` exists.
 
 ---
 
