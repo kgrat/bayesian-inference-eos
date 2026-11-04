@@ -133,7 +133,10 @@ Where:
 
 1. The EoS must support **Mₘₐₓ > 2.01 M⊙**.  
 2. Pressures must lie in a physically reasonable range (e.g., 33.0 < log P₁ < 36.5).  
-3. Pressure must increase monotonically across the knots (enforced). Causality (c_s ≤ c) is **not** enforced.
+3. Pressure must increase monotonically across the knots.
+4. Causality: c_s² = dP/dε = ΓP/(ε + P) must not exceed c² below the central pressure of the maximum-mass star.
+
+All of these are enforced in `run_mcmc.py` (the likelihood is −∞ outside them).
 
 ---
 
@@ -148,7 +151,9 @@ Each term is modeled as a Gaussian χ² likelihood comparing predicted and obser
 
 - **L_J0030:** Radius of a 1.44 M⊙ star (NICER)  
 - **L_LIGO:** Radius constraint from GW170817  
-- **L_J0740:** Radius at 2.08 M⊙, conditional on supporting that mass  
+- **L_J0740:** Gaussian in the radius, averaged over the pulsar's mass distribution (200 quantiles of the J0740 mass samples between 2.0 and 2.15 M⊙). Masses above the model's M_max contribute zero, so an EoS that barely reaches 2.01 M⊙ is penalized instead of skipped.  
+
+Radii are read off the stable branch of the M-R curve (where M increases with central density).  
 
 The combined likelihood encodes the relation between soft and stiff constraints.
 

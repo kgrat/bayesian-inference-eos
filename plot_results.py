@@ -21,7 +21,7 @@ def generate_one_mr_curve(params):
     It generates a single M-R curve for one set of parameters.
     """
     try:
-        eos_func, inverse_eos_func, eps_func = build_eos_from_params(params)
+        eos_func, inverse_eos_func, eps_func, _ = build_eos_from_params(params)
         central_densities_plot = np.logspace(np.log10(RHO_NUC), np.log10(15 * RHO_NUC), 100)
         masses_plot = []
         radii_plot = []

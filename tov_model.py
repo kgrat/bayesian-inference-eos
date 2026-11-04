@@ -57,7 +57,8 @@ def energy_offsets(rho_lo, Ks, gammas):
 def build_eos_from_params(params):
     """
     Builds EoS functions from [logP1, logP2, logP3] parameters.
-    Returns eos_func P(rho), inverse_eos_func rho(P), and eps_func epsilon(P).
+    Returns eos_func P(rho), inverse_eos_func rho(P), eps_func epsilon(P), and
+    cs2_func c_s^2/c^2 = Gamma P / (epsilon + P).
     """
     logP1, logP2, logP3 = params
     P1 = 10**logP1
@@ -130,7 +131,19 @@ def build_eos_from_params(params):
         i = np.searchsorted(seg_rho_lo, rho, side='right') - 1
         return (1 + seg_a[i]) * rho * c**2 + seg_K[i] * rho**seg_G[i] / (seg_G[i] - 1)
 
-    return final_eos, final_inverse_eos, final_eps
+    def final_cs2(P):
+        """Squared sound speed dP/d(epsilon) in units of c^2."""
+        if P <= 0.0:
+            return 0.0
+        rho = final_inverse_eos(P)
+        i = np.searchsorted(seg_rho_lo, rho, side='right') - 1
+        return seg_G[i] * P / (final_eps(P) + P)
+
+    # Pressures at the top of each segment: c_s^2 grows with P inside a segment, so its maximum
+    # below a given pressure is at one of these or at that pressure itself.
+    final_cs2.segment_tops = np.exp(log_Ps[1:]) * (1 - 1e-9)
+
+    return final_eos, final_inverse_eos, final_eps, final_cs2
 # TOV Solver 
 
 def tov_solver(r, state, eps_func):
@@ -161,7 +174,7 @@ def tov_solver(r, state, eps_func):
 
     return [dMdr, dPdr]
 
-def solve_for_central_density(rho_c, eos_func, inverse_eos_func, eps_func):
+def solve_for_central_density(rho_c, eos_func, inverse_eos_func, eps_func, _cs2_func=None):
     """
     Solves the TOV equations for a single star using correct initial conditions.
     Returns the final Mass and Radius.
@@ -201,57 +214,70 @@ def solve_for_central_density(rho_c, eos_func, inverse_eos_func, eps_func):
 
     return final_M / M_sun, final_R / 1000.0
 # --- 5. The engine function ---
-def generate_observables(params):
+def stable_radius_at(masses, radii, targets):
     """
-    This is the master function that the MCMC will call.
-    It takes the EoS parameters and returns M_max, R_1.4, and R_2.08
+    R(M) on the stable branch. masses/radii are ordered by increasing central density.
+    Stable runs are maximal stretches where M increases; the lowest-density run that
+    brackets the target mass is used. Returns NaN where no stable star has that mass.
+    """
+    masses, radii = np.asarray(masses), np.asarray(radii)
+    targets = np.atleast_1d(np.asarray(targets, dtype=float))
+    out = np.full(targets.shape, np.nan)
+    inc = np.diff(masses) > 0
+    i, n = 0, len(masses)
+    while i < n - 1:
+        if not inc[i]:
+            i += 1
+            continue
+        j = i
+        while j < n - 1 and inc[j]:
+            j += 1
+        m_run, r_run = masses[i:j+1], radii[i:j+1]
+        todo = np.isnan(out) & (targets >= m_run[0]) & (targets <= m_run[-1])
+        out[todo] = np.interp(targets[todo], m_run, r_run)
+        i = j
+    return out
+
+def generate_curve(params):
+    """
+    M-R curve ordered by increasing central density, plus the maximum c_s^2/c^2 of the EoS
+    below the central pressure of the maximum-mass star.
+    Returns (masses, radii, max_cs2), or None if the EoS cannot be built.
     """
     try:
-        eos_func, inverse_eos_func, eps_func = build_eos_from_params(params)
+        eos_func, inverse_eos_func, eps_func, cs2_func = build_eos_from_params(params)
     except (ValueError, OverflowError):
-        return 0, 0, 0 # M_max, R_1.4, R_2.08
+        return None
 
     central_densities = np.logspace(np.log10(RHO_NUC), np.log10(15 * RHO_NUC), 50)
-    masses = []
-    radii = []
+    masses, radii, P_cs = [], [], []
 
     for rho_c in central_densities:
         M, R = solve_for_central_density(rho_c, eos_func, inverse_eos_func, eps_func)
         if M > 0.1:
             masses.append(M)
             radii.append(R)
+            P_cs.append(eos_func(rho_c))
 
     if not masses:
+        return np.array([]), np.array([]), np.nan
+
+    P_top = P_cs[int(np.argmax(masses))]
+    Ps = np.concatenate([np.logspace(30, np.log10(P_top), 200),
+                         cs2_func.segment_tops[cs2_func.segment_tops <= P_top]])
+    max_cs2 = max(cs2_func(P) for P in Ps)
+    return np.array(masses), np.array(radii), max_cs2
+
+def generate_observables(params):
+    """
+    Returns M_max, R_1.4 and R_2.08 (stable branch; 0 where the star does not exist).
+    """
+    curve = generate_curve(params)
+    if curve is None or len(curve[0]) == 0:
         return 0, 0, 0
-
-    M_max = np.max(masses)
-
-    if M_max < 2.01:
-         return M_max, 0, 0
-
-    sort_idx = np.argsort(masses)
-    masses_sorted = np.array(masses)[sort_idx]
-    radii_sorted = np.array(radii)[sort_idx]
-
-    unique_masses, unique_idx = np.unique(masses_sorted, return_index=True)
-
-    if len(unique_masses) < 2:
-        return M_max, 0, 0
-
-    R_1_4 = np.interp(1.4, unique_masses, radii_sorted[unique_idx])
-
-    # This is the part that calculates R_2_08 
-    if 2.08 > unique_masses[-1]:
-         R_2_08 = 0 # Cannot calculate R_2.08 if M_max is too low
-    else:
-         R_2_08 = np.interp(2.08, unique_masses, radii_sorted[unique_idx])
-    
-
-    if np.isnan(R_1_4) or np.isnan(R_2_08):
-        return M_max, 0, 0
-
-    return M_max, R_1_4, R_2_08
-
+    masses, radii, _ = curve
+    R_1_4, R_2_08 = np.nan_to_num(stable_radius_at(masses, radii, [1.4, 2.08]))
+    return np.max(masses), R_1_4, R_2_08
 
 if __name__ == "__main__":
     print(f"Crust-Core Stitch Pressure (P_STITCH): {P_STITCH:.2e} Pa")

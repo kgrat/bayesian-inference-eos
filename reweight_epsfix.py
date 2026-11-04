@@ -1,5 +1,6 @@
 """
-Importance reweighting of the pre-fix emcee chain to the energy-density-corrected likelihood.
+Importance reweighting of the pre-fix emcee chain to the current likelihood
+(energy-density correction, causality cut, stable branch, mass-marginalized J0740).
 
 The prior is unchanged by the fix, so a draw from the old posterior gets weight
   w = L_new / L_old = exp(lnL_new - lnL_old).
@@ -19,24 +20,25 @@ import numpy as np
 HERE = os.path.dirname(os.path.realpath(__file__))
 OLD_H5 = os.path.join(HERE, "results_before_epsfix", "mcmc_results.h5")
 
-_OLD = _NEW = None
+_OLD = _NEW = _NEW_OBS = None
 
 def _load():
-    global _OLD, _NEW
+    global _OLD, _NEW, _NEW_OBS
     if _OLD is None:
         spec = importlib.util.spec_from_file_location(
             "old_run_mcmc", os.path.join(HERE, "results_before_epsfix", "old_engines", "run_mcmc.py"))
         _OLD = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(_OLD)
         import run_mcmc as new
-        _NEW = new
+        from tov_model import generate_observables
+        _NEW, _NEW_OBS = new, generate_observables
 
 def evaluate(params):
     _load()
     params = list(params)
     lnl_old = _OLD.log_likelihood(params)
     lnl_new = _NEW.log_likelihood(params)
-    m_max, r14, r208 = _NEW.generate_observables(params)
+    m_max, r14, r208 = _NEW_OBS(params)
     return lnl_old, lnl_new, m_max, r14, r208
 
 def weighted_quantiles(x, w, qs):

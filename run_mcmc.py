@@ -24,7 +24,7 @@ except Exception:
 # Physics / EoS / TOV functions
 # (single source of truth: tov_model.py)
 # -------------------------------
-from tov_model import generate_observables
+from tov_model import generate_curve, stable_radius_at
 
 # -------------------------------
 # Data loading (as global variables)
@@ -55,6 +55,8 @@ try:
     mask_j0740 = (j0740_masses > 2.0) & (j0740_masses < 2.15)
     R_2_08_SAMPLES_J0740 = j0740_radii[mask_j0740]
     R_J0740_MEAN = np.mean(R_2_08_SAMPLES_J0740); R_J0740_STD = np.std(R_2_08_SAMPLES_J0740)
+    # Mass distribution of J0740 in the same window (200 quantiles), used to marginalize over its mass
+    J0740_MASSES = np.quantile(j0740_masses[mask_j0740], (np.arange(200) + 0.5) / 200)
     
     print("--- Successfully loaded all data ---")
     print(f"   R_1.4 (LIGO): {R_LIGO_MEAN:.2f} +/- {R_LIGO_STD:.2f} km")
@@ -72,30 +74,41 @@ except Exception as e:
 def log_likelihood(params):
     """
     Calculates the log-likelihood using the globally loaded data.
+    Physical cuts: monotonic pressure (in build_eos_from_params), M_max >= 2.01 Msun,
+    and causality (c_s <= c below the central pressure of the maximum-mass star).
     """
-    try:
-        M_max, R_1_4, R_2_08 = generate_observables(params)
-    except Exception:
-        return -np.inf
-        
-    if M_max < 2.01:
-        return -np.inf
-    if R_1_4 == 0:
-        return -np.inf
-        
     logP1, logP2, logP3 = params
     if not (33.0 < logP1 < 35.0): return -np.inf
     if not (34.0 < logP2 < 35.5): return -np.inf
     if not (35.0 < logP3 < 36.5): return -np.inf
 
+    try:
+        curve = generate_curve(params)
+    except Exception:
+        return -np.inf
+    if curve is None or len(curve[0]) < 2:
+        return -np.inf
+    masses, radii, max_cs2 = curve
+
+    if np.max(masses) < 2.01:
+        return -np.inf
+    if not (max_cs2 <= 1.0):
+        return -np.inf
+
+    R_1_4 = stable_radius_at(masses, radii, 1.4)[0]
+    if not np.isfinite(R_1_4):
+        return -np.inf
+
     chi2_nicer_j0030 = ((R_1_4 - R_J0030_MEAN)**2) / (R_J0030_STD**2)
     chi2_ligo_radius = ((R_1_4 - R_LIGO_MEAN)**2) / (R_LIGO_STD**2)
     final_score = -0.5 * (chi2_nicer_j0030 + chi2_ligo_radius)
-    
-    if R_2_08 != 0:
-        chi2_j0740 = ((R_2_08 - R_J0740_MEAN)**2) / (R_J0740_STD**2)
-        final_score += -0.5 * chi2_j0740
-        
+
+    # J0740: Gaussian in R averaged over the pulsar's mass distribution. Masses above M_max
+    # contribute zero, so an EoS that only just reaches 2.01 Msun is penalized instead of skipped.
+    R_j = stable_radius_at(masses, radii, J0740_MASSES)
+    like_j = np.where(np.isfinite(R_j), np.exp(-0.5 * (R_j - R_J0740_MEAN)**2 / R_J0740_STD**2), 0.0)
+    final_score += np.log(np.mean(like_j)) if np.mean(like_j) > 0 else -np.inf
+
     return final_score
 
 # -------------------------------
@@ -139,7 +152,8 @@ def parse_args():
     p.add_argument('--n-steps', type=int, default=200)
     p.add_argument('--n-proc', type=int, default=max(1, mp.cpu_count()-1), help='Number of processes to use')
     p.add_argument('--output', type=str, default='mcmc_results.h5')
-    p.add_argument('--init', type=float, nargs=3, default=[33.79, 34.43, 35.56], help='Initial logP1 logP2 logP3')
+    p.add_argument('--init', type=float, nargs=3, default=[33.38, 34.46, 35.15],
+                   help='Initial logP1 logP2 logP3 (must be causal and reach 2.01 Msun)')
     return p.parse_args()
 
 

@@ -14,7 +14,7 @@ For the full theoretical background and derivations, see [PHYSICS.md](./PHYSICS.
 
 ## Results
 
-> **Note:** `mcmc_results.h5` and the plots below were produced before the energy-density correction (see [Changelog](#changelog)) and have not been regenerated. The corrected posterior, obtained by reweighting this chain, is summarized in the Changelog and stored in `reweighted_epsfix.h5`. Re-run `run_mcmc.py` and `plot_results.py` to regenerate the chain and plots.
+> **Note:** `mcmc_results.h5` and the plots below were produced before the energy-density correction (see [Changelog](#changelog)) and have not been regenerated. The likelihood has since gained physical cuts (see Changelog), so `run_mcmc.py` and `plot_results.py` must be re-run to produce current results.
 
 The MCMC simulation, run with 50 walkers for 2,500 steps, successfully found the family of EoS models that are consistent with all three data sets.
 
@@ -107,14 +107,18 @@ This script will load mcmc_results.h5, generate all three plots (Trace, Corner, 
 
   For a fixed EoS the correction lowers M_max by about 0.44 M☉ and R_1.4 by about 0.42 km (medians). 2.8% of the old posterior draws no longer reach 2.01 M☉.
 
-* **Corrected posterior by importance reweighting.** The prior is unchanged by the fix, so the old chain can be reweighted with w = L_new / L_old (`reweight_epsfix.py`, 2000 draws, output in `reweighted_epsfix.h5`). The effective sample size is 605 (30%), and the largest single weight is 1%, so the reweighted posterior is reliable for medians and 90% intervals:
+* **Physical cuts.** `run_mcmc.py` now rejects acausal EoSs (c_s > c below the central pressure of the maximum-mass star), reads radii off the stable branch, and averages the J0740 term over the pulsar's mass distribution instead of skipping it when M_max < 2.08 M☉. The default starting point is now causal (`--init 33.38 34.46 35.15`); the old one, `33.79 34.43 35.56`, has c_s² = 1.55c².
+
+  The pre-fix chain cannot be reweighted to this likelihood: 98% of its draws are acausal, leaving an effective sample size of 16 out of 2000. A new run of `run_mcmc.py` is needed. The reweighted estimate, M_max ≈ 2.20 M☉ and R_1.4 ≈ 12.6 km, is indicative only. It agrees with the nested-sampling polytrope in EoS-model-selection (2.24 M☉, 12.68 km).
+
+* **Corrected posterior by importance reweighting (energy-density fix only, no physical cuts).** The prior is unchanged by the fix, so the old chain can be reweighted with w = L_new / L_old (`reweight_epsfix.py`, 2000 draws, output in `reweighted_epsfix.h5`). The effective sample size is 605 (30%), and the largest single weight is 1%, so the reweighted posterior is reliable for medians and 90% intervals:
 
   | | M_max [M☉] | R_1.4 [km] | R_2.08 [km] | log P₁ | log P₂ | log P₃ |
   | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
   | Pre-fix posterior (old physics) | 3.17 [2.49, 3.73] | 12.42 [11.77, 13.23] | 12.69 [11.41, 13.37] | 33.21 [33.03, 33.42] | 34.79 [34.14, 35.41] | 35.79 [35.11, 36.43] |
   | Corrected posterior (reweighted) | 3.03 [2.31, 3.32] | 12.39 [11.77, 13.18] | 12.51 [10.77, 13.27] | 33.28 [33.05, 33.50] | 35.06 [34.24, 35.45] | 36.01 [35.25, 36.47] |
 
-  R_1.4 is essentially unchanged because the data pin it. To keep the same radii with the extra gravitating energy, the posterior moves to higher pressures, and the upper ends of log P₂ and log P₃ now reach the prior bounds (35.5, 36.5). M_max stays above 3 M☉, and most of these EoSs are acausal (causality is not enforced). A full re-run of `run_mcmc.py` would refine the tails but is not needed for the central values. Old results and engines are in `results_before_epsfix/`.
+  R_1.4 is essentially unchanged because the data pin it. To keep the same radii with the extra gravitating energy, the posterior moves to higher pressures, and the upper ends of log P₂ and log P₃ now reach the prior bounds (35.5, 36.5). M_max stays above 3 M☉, and most of these EoSs are acausal (causality is not enforced). This posterior is superseded by the physical cuts above. Old results and engines are in `results_before_epsfix/`.
 
 ---
 
