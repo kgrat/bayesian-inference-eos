@@ -20,7 +20,7 @@ Modern astrophysical observations create a **tension** between “soft” and �
 
 | Observation | Type of EoS Favored |
 |--------------|---------------------|
-| **High-mass pulsars** (e.g. PSR J0740+0620, ~2.08 M⊙) | **Stiff EoS** (larger radii) |
+| **High-mass pulsars** (e.g. PSR J0740+6620, ~2.08 M⊙) | **Stiff EoS** (larger radii) |
 | **LIGO/Virgo GW170817** (low tidal deformability) | **Soft EoS** (smaller radii) |
 
 The challenge is to find the “sweet spot” — EoS models stiff enough to support ~2 M⊙ pulsars yet soft enough to satisfy the compactness inferred from LIGO/Virgo and NICER observations.
