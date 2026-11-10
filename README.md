@@ -130,7 +130,7 @@ All data files and posterior samples used in this project are publicly available
 
 2. NICER PSR J0030+0451 (Miller et al., 2019)
 
-3. NICER PSR J0740+0620 (Riley et al., 2021)
+3. NICER PSR J0740+6620 (Riley et al., 2021)
 
 The entire pipeline can be reproduced on any system with Python ≥ 3.8.
 

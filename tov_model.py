@@ -335,7 +335,7 @@ if __name__ == "__main__":
 
 
 
-    # 3. Load NICER J0740+0620 Data
+    # 3. Load NICER J0740+6620 Data
     # Load J0740_data.dat
     # Columns: 0=Radius, 1=Mass
     j0740_data = np.loadtxt('J0740_data.dat', skiprows=2) # Skip 2 header lines
@@ -352,7 +352,7 @@ if __name__ == "__main__":
     R_J0740_MEAN = np.mean(R_2_08_SAMPLES_J0740)
     R_J0740_STD = np.std(R_2_08_SAMPLES_J0740)
 
-    print("--- Successfully loaded J0740+0620 data ---")
+    print("--- Successfully loaded J0740+6620 data ---")
     print(f"R_2.08 (J0740): {R_J0740_MEAN:.2f} +/- {R_J0740_STD:.2f} km")
 
 
