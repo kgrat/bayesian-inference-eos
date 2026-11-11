@@ -14,7 +14,22 @@ For the full theoretical background and derivations, see [PHYSICS.md](./PHYSICS.
 
 ## Results
 
-> **These figures predate the corrections listed below.** They show the analysis workflow (M-R credible band, parameter posteriors, walker traces), but not current constraints: the pre-correction posterior overestimates the maximum mass. The corrected likelihood has not been re-sampled yet. Corrected results for the same polytrope parameterization are in [EoS-model-selection](https://github.com/kgrat/EoS-model-selection): M_max ≈ 2.24 M☉ and R_1.4 ≈ 12.7 km.
+MCMC with `emcee`: 50 walkers, 300 burn-in + 700 steps, with the corrected physics and physical cuts (see [Corrections](#corrections)). Medians and 90% intervals:
+
+| Quantity | Posterior |
+| :--- | :--- |
+| Maximum mass M_max | 2.22 [2.08, 2.38] M☉ |
+| Radius R_1.4 | 12.55 [11.68, 13.40] km |
+| Radius R_2.08 | 11.92 [11.15, 12.66] km |
+| log₁₀ P₁ (at 1.85 ρ_nuc, Pa) | 33.38 [33.20, 33.53] |
+| log₁₀ P₂ (at 3.7 ρ_nuc, Pa) | 34.48 [34.37, 34.57] |
+| log₁₀ P₃ (at 7.4 ρ_nuc, Pa) | 35.16 [35.02, 35.32] |
+
+These agree with the nested-sampling polytrope in [EoS-model-selection](https://github.com/kgrat/EoS-model-selection) (M_max ≈ 2.24 M☉, R_1.4 ≈ 12.7 km).
+
+**Convergence.** The mean acceptance fraction is 0.56, and no walkers are stuck. The integrated autocorrelation time is about 31 steps, so the 700 post-burn-in steps are about 22 autocorrelation times (roughly 1,100 independent samples). That is enough for medians and 90% intervals; a longer chain would refine the tails. The medians of the first and second halves of the chain agree to within 0.013.
+
+**Prior edge.** About 12% of the log P₃ samples lie within 0.05 of the lower prior bound (35.0). The causality cut favours a softer high-density EoS, so the lower end of the log P₃ interval is partly set by the prior.
 
 ### 1. Constrained Mass-Radius Relation
 
@@ -91,10 +106,10 @@ This script will load mcmc_results.h5, generate all three plots (Trace, Corner, 
 
 ## Corrections
 
-An earlier version of this code had physics errors. They are fixed in the current code; the stored MCMC results above have not yet been regenerated.
+An earlier version of this code had physics errors. They are fixed, and the results above come from the corrected code.
 
 * **Energy density in the TOV equations.** The solver used the rest-mass density ρ where the TOV equations need the total energy density ε. It now uses ε(ρ) = (1 + aᵢ)ρc² + Kᵢρ^Γᵢ/(Γᵢ − 1) for each polytrope segment, with aᵢ set by continuity (Read et al. 2009; see PHYSICS.md). For a fixed EoS this lowers M_max by about 0.4 M☉. The central series expansion also had a c² that should have been c⁴.
-* **Physical cuts.** The likelihood now rejects acausal EoSs (sound speed above c inside a stable star) and reads radii off the stable branch only. The J0740 term is averaged over the pulsar's mass distribution instead of being skipped when M_max < 2.08 M☉. Most of the pre-correction posterior was acausal.
+* **Physical cuts.** The likelihood now rejects acausal EoSs (sound speed above c inside a stable star) and reads radii off the stable branch only. The J0740 term is averaged over the pulsar's mass distribution instead of being skipped when M_max < 2.08 M☉. Most of the pre-correction posterior was acausal, and its median M_max was 3.2 M☉.
 * **Code structure.** `run_mcmc.py` and `plot_results.py` now import the physics from `tov_model.py` instead of carrying their own copies.
 
 The pre-correction results are kept under the git tag `epsfix-comparison-archive`.

@@ -155,7 +155,5 @@ if __name__ == "__main__":
     end_plot_time = time.time()
     print(f"Credible band plot complete in {(end_plot_time - start_plot_time)/60.0:.1f} minutes.")
     
-    # --- 12. Show All Plots at the End ---
-    print("\nAll plots saved. Displaying plots now...")
-    plt.show() # Plotting ended
+    print("\nAll plots saved.")
 
