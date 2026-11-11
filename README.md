@@ -103,7 +103,7 @@ The pre-correction results are kept under the git tag `epsfix-comparison-archive
 
 ## Acknowledgments
 
-The project design, model choices and original implementation are my own. I used Claude (Anthropic), an AI coding assistant, to help find and fix the bugs listed under [Corrections](#corrections) and to correct the documentation.
+**AI disclosure:** In a later debugging stage I used an AI coding assistant to help find and fix bugs and update the documentation. The project design and original implementation are my own.
 
 ---
 
