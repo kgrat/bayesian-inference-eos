@@ -192,8 +192,8 @@ Future Work:
 ## 6. References
 
 - **LIGO/Virgo:** Abbott et al. (2018), *Phys. Rev. Lett.*, 121, 161101.  
-- **NICER (J0030):** Miller et al. (2019), Riley et al. (2019), *ApJ Letters*, 887.  
-- **NICER (J0740):** Miller et al. (2021), Riley et al. (2021), *ApJ Letters*, 918.  
+- **NICER (J0030):** Miller, Lamb, Dittmann, et al. (2019), *ApJ Letters*, 887, L24.  
+- **NICER (J0740):** Dittmann, Miller, Lamb, et al. (2024), *ApJ*, 974, 295.  
 - **Piecewise Polytrope:** Read et al. (2009), *Phys. Rev. D*, 79, 124032.  
 - **TOV Equations:** Tolman (1939); Oppenheimer & Volkoff (1939), *Phys. Rev.*, 55.
 

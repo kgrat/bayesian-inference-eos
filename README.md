@@ -4,8 +4,8 @@ This project constrains the neutron star (NS) Equation of State (EoS) by perform
 
 The likelihood uses three multi-messenger astronomical observations, each reduced to a Gaussian on the radius at a fixed mass:
 1.  **LIGO/Virgo:** The gravitational wave event GW170817 (using the EoS-insensitive radius posteriors).
-2.  **NICER (PSR J0030+0451):** The mass-radius posteriors for the 1.44 M solar mass pulsar.
-3.  **NICER (PSR J0740+6620):** The mass-radius posteriors for the high-mass ~2.08 M solar mass pulsar. 
+2.  **NICER (PSR J0030+0451):** The mass-radius posteriors for the 1.44 M solar mass pulsar (Miller et al. 2019).
+3.  **NICER (PSR J0740+6620):** The mass-radius posteriors for the high-mass ~2.08 M solar mass pulsar (Dittmann et al. 2024, NICER + XMM-Newton).
 
 For the full theoretical background and derivations, see [PHYSICS.md](./PHYSICS.md).
 
@@ -87,11 +87,13 @@ python tov_model.py
 #### 4. Run the MCMC Simulation
 Execute the [run_mcmc.py](run_mcmc.py) script from your terminal. This will use all available CPU cores to run the simulation.
 
+The results in this README used 300 burn-in + 700 steps (about 2.7 hours on 9 cores):
+
 ```bash
-# Full run: 50 walkers, 500 burn-in + 2000 steps
-python run_mcmc.py --n-burn 500 --n-steps 2000
+python run_mcmc.py --n-burn 300 --n-steps 700
 ```
-This will run for several hours and create a new file: mcmc_results.h5.
+
+A longer run (for example `--n-burn 500 --n-steps 2000`) refines the tails but takes several hours. Either run writes `mcmc_results.h5`.
 
 #### 5. Generate the Plots
 Once mcmc_results.h5 exists, run the plotting script:
@@ -130,7 +132,7 @@ All data files and posterior samples used in this project are publicly available
 
 2. NICER PSR J0030+0451 (Miller et al., 2019)
 
-3. NICER PSR J0740+6620 (Riley et al., 2021)
+3. NICER PSR J0740+6620 (Dittmann et al., 2024; samples on Zenodo, doi:10.5281/zenodo.10215109)
 
 The entire pipeline can be reproduced on any system with Python ≥ 3.8.
 
@@ -139,7 +141,7 @@ The entire pipeline can be reproduced on any system with Python ≥ 3.8.
 ## References
 
 - **LIGO/Virgo:** Abbott et al. (2018), *Phys. Rev. Lett.*, 121, 161101.  
-- **NICER (J0030):** Miller et al. (2019), Riley et al. (2019), *ApJ Letters*, 887.  
-- **NICER (J0740):** Miller et al. (2021), Riley et al. (2021), *ApJ Letters*, 918.
+- **NICER (J0030):** Miller, Lamb, Dittmann, et al. (2019), *ApJ Letters*, 887, L24.  
+- **NICER (J0740):** Dittmann, Miller, Lamb, et al. (2024), *ApJ*, 974, 295.
 
 ---
