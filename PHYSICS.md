@@ -88,7 +88,7 @@ Here:
 - *ε(r)* is the **total energy density** (rest mass plus internal energy) and *P(r)* the pressure,
 - *G* and *c* are the gravitational constant and speed of light.
 
-Gravity couples to all of the energy, so it is ε, not the rest-mass density ρ, that appears in both equations. Earlier versions of this code used ρ in place of ε/c²; see the Changelog in the README.
+Gravity couples to all of the energy, so it is ε, not the rest-mass density ρ, that appears in both equations. Earlier versions of this code used ρ in place of ε/c²; see Corrections in the README.
 
 ### Energy Density of a Piecewise Polytrope
 

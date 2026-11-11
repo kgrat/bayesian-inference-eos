@@ -14,25 +14,23 @@ For the full theoretical background and derivations, see [PHYSICS.md](./PHYSICS.
 
 ## Results
 
-> **Note:** `mcmc_results.h5` and the plots below were produced before the energy-density correction (see [Changelog](#changelog)) and have not been regenerated. The likelihood has since gained physical cuts (see Changelog), so `run_mcmc.py` and `plot_results.py` must be re-run to produce current results.
-
-The MCMC simulation, run with 50 walkers for 2,500 steps, successfully found the family of EoS models that are consistent with all three data sets.
+> **These figures predate the corrections listed below.** They show the analysis workflow (M-R credible band, parameter posteriors, walker traces), but not current constraints: the pre-correction posterior overestimates the maximum mass. The corrected likelihood has not been re-sampled yet. Corrected results for the same polytrope parameterization are in [EoS-model-selection](https://github.com/kgrat/EoS-model-selection): M_max ≈ 2.24 M☉ and R_1.4 ≈ 12.7 km.
 
 ### 1. Constrained Mass-Radius Relation
 
-The final "credible band" shows the family of EoS models that are statistically favored. The plot visualizes the core tension in modern astrophysics: the EoS must be "soft" enough to be consistent with the LIGO/Virgo data (green) while simultaneously being "stiff" enough to support the existence of massive pulsars like J0740 (orange) and the general 2.01 M solar mass limit (grey).
+The credible band shows the EoS models allowed by the data. The EoS must be soft enough to match the GW170817 radius constraint (green) and stiff enough to support massive pulsars such as J0740 (orange) and the 2.01 M☉ limit (grey).
 
 ![Constrained M-R Plot](mr_constrained.png)
 
 ### 2. Parameter Posterior Distributions
 
-The corner plot shows the final probability distributions for the three EoS parameters (the log-pressure at 1.85, 3.7, and 7.4 times nuclear saturation density). This shows the specific values and correlations that a physical EoS must have to be consistent with observations.
+Posterior distributions of the three EoS parameters (log-pressure at 1.85, 3.7 and 7.4 times nuclear saturation density) and their correlations.
 
 ![Corner Plot](mcmc_corner_plot.png)
 
 ### 3. MCMC Convergence
 
-The walker traces show that the MCMC successfully converged on a stable solution after an initial burn-in period.
+Walker traces, showing burn-in and stationarity.
 
 ![Trace Plot](mcmc_traces.png)
 
@@ -59,7 +57,7 @@ Make sure you have all the necessary files in the same directory:
 * `J0030_data.dat`
 * `J0740_data.dat`
 
-#### 2. Depedencies
+#### 2. Dependencies
 And install the required libraries:
 ```bash
 pip install numpy scipy matplotlib emcee corner h5py
@@ -75,7 +73,7 @@ python tov_model.py
 Execute the [run_mcmc.py](run_mcmc.py) script from your terminal. This will use all available CPU cores to run the simulation.
 
 ```bash
-# To run the full, 2500-step (500 burn + 2000 steps) simulation:
+# Full run: 50 walkers, 500 burn-in + 2000 steps
 python run_mcmc.py --n-burn 500 --n-steps 2000
 ```
 This will run for several hours and create a new file: mcmc_results.h5.
@@ -91,34 +89,21 @@ This script will load mcmc_results.h5, generate all three plots (Trace, Corner, 
 
 ---
 
-## Changelog
+## Corrections
 
-**Energy-density correction (fix-energy-density branch).**
+An earlier version of this code had physics errors. They are fixed in the current code; the stored MCMC results above have not yet been regenerated.
 
-* **TOV equations.** The solver used the rest-mass density ρ where the TOV equations need the total energy density ε/c²: in dM/dr, in the (ε + P) factor of dP/dr, and in the central conditions. It now uses ε(P) = (1 + aᵢ)ρc² + Kᵢρ^Γᵢ/(Γᵢ − 1), with aᵢ set by continuity of ε at each dividing density (Read et al. 2009). See PHYSICS.md.
-* **Central series expansion.** The P(r₀) correction term divided by c² instead of c⁴. Its effect was about 0.1% of P_c.
-* **One copy of the physics.** `run_mcmc.py` and `plot_results.py` each carried their own copy of the EoS/TOV code. Both now import it from `tov_model.py`. The test code in `tov_model.py` runs only when the file is executed directly.
-* **Effect.** The MCMC has **not** been re-run yet, so `mcmc_results.h5` and the plots are still pre-fix. Evaluating 500 draws of the old posterior with old and corrected physics:
+* **Energy density in the TOV equations.** The solver used the rest-mass density ρ where the TOV equations need the total energy density ε. It now uses ε(ρ) = (1 + aᵢ)ρc² + Kᵢρ^Γᵢ/(Γᵢ − 1) for each polytrope segment, with aᵢ set by continuity (Read et al. 2009; see PHYSICS.md). For a fixed EoS this lowers M_max by about 0.4 M☉. The central series expansion also had a c² that should have been c⁴.
+* **Physical cuts.** The likelihood now rejects acausal EoSs (sound speed above c inside a stable star) and reads radii off the stable branch only. The J0740 term is averaged over the pulsar's mass distribution instead of being skipped when M_max < 2.08 M☉. Most of the pre-correction posterior was acausal.
+* **Code structure.** `run_mcmc.py` and `plot_results.py` now import the physics from `tov_model.py` instead of carrying their own copies.
 
-  | | M_max [M☉] median [90%] | R_1.4 [km] median [90%] |
-  | :--- | :--- | :--- |
-  | Old posterior, old physics | 3.17 [2.49, 3.73] | 12.42 [11.77, 13.23] |
-  | Same draws, corrected physics | 2.74 [2.08, 3.29] | 11.99 [11.23, 12.68] |
+The pre-correction results are kept under the git tag `epsfix-comparison-archive`.
 
-  For a fixed EoS the correction lowers M_max by about 0.44 M☉ and R_1.4 by about 0.42 km (medians). 2.8% of the old posterior draws no longer reach 2.01 M☉.
+---
 
-* **Physical cuts.** `run_mcmc.py` now rejects acausal EoSs (c_s > c below the central pressure of the maximum-mass star), reads radii off the stable branch, and averages the J0740 term over the pulsar's mass distribution instead of skipping it when M_max < 2.08 M☉. The default starting point is now causal (`--init 33.38 34.46 35.15`); the old one, `33.79 34.43 35.56`, has c_s² = 1.55c².
+## Acknowledgments
 
-  The pre-fix chain cannot be reweighted to this likelihood: 98% of its draws are acausal, leaving an effective sample size of 16 out of 2000. A new run of `run_mcmc.py` is needed. The reweighted estimate, M_max ≈ 2.20 M☉ and R_1.4 ≈ 12.6 km, is indicative only. It agrees with the nested-sampling polytrope in EoS-model-selection (2.24 M☉, 12.68 km).
-
-* **Corrected posterior by importance reweighting (energy-density fix only, no physical cuts).** The prior is unchanged by the fix, so the old chain can be reweighted with w = L_new / L_old (`reweight_epsfix.py`, 2000 draws, output in `reweighted_epsfix.h5`). The effective sample size is 605 (30%), and the largest single weight is 1%, so the reweighted posterior is reliable for medians and 90% intervals:
-
-  | | M_max [M☉] | R_1.4 [km] | R_2.08 [km] | log P₁ | log P₂ | log P₃ |
-  | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-  | Pre-fix posterior (old physics) | 3.17 [2.49, 3.73] | 12.42 [11.77, 13.23] | 12.69 [11.41, 13.37] | 33.21 [33.03, 33.42] | 34.79 [34.14, 35.41] | 35.79 [35.11, 36.43] |
-  | Corrected posterior (reweighted) | 3.03 [2.31, 3.32] | 12.39 [11.77, 13.18] | 12.51 [10.77, 13.27] | 33.28 [33.05, 33.50] | 35.06 [34.24, 35.45] | 36.01 [35.25, 36.47] |
-
-  R_1.4 is essentially unchanged because the data pin it. To keep the same radii with the extra gravitating energy, the posterior moves to higher pressures, and the upper ends of log P₂ and log P₃ now reach the prior bounds (35.5, 36.5). M_max stays above 3 M☉, and most of these EoSs are acausal (causality is not enforced). This posterior is superseded by the physical cuts above. Old results and engines are in `results_before_epsfix/`.
+The project design, model choices and original implementation are my own. I used Claude (Anthropic), an AI coding assistant, to help find and fix the bugs listed under [Corrections](#corrections) and to correct the documentation.
 
 ---
 

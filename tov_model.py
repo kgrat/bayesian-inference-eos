@@ -368,7 +368,7 @@ if __name__ == "__main__":
         except Exception as e:
             return -np.inf
 
-        # 2. The Judge's First Cut for errors
+        # 2. First cut: reject unphysical EoS
         if M_max < 2.01:
             return -np.inf
         if R_1_4 == 0: # The 1.4 M_sun star MUST exist
@@ -401,7 +401,7 @@ if __name__ == "__main__":
         return final_score
 
     # Test the Likelihood Function
-    print("Testing the fully rigorous log_likelihood function...")
+    print("Testing the log_likelihood function...")
     good_params = [33.79, 34.43, 35.56] 
 
     print(f"Score for good parameters: {log_likelihood(good_params):.2f}")

@@ -150,11 +150,7 @@ if __name__ == "__main__":
     plt.legend(fontsize=12)
     plt.xlim(8, 16)
     plt.ylim(0.5, 2.5)
-    # Change this:
-# plt.savefig("mcmc_credible_band_rigorous.png")
-
-# To this:
-    plt.savefig("mcmc_credible_band_rigorous.svg", format='svg', bbox_inches='tight')
+    plt.savefig("mr_constrained.png", dpi=200, bbox_inches='tight')
 
     end_plot_time = time.time()
     print(f"Credible band plot complete in {(end_plot_time - start_plot_time)/60.0:.1f} minutes.")
